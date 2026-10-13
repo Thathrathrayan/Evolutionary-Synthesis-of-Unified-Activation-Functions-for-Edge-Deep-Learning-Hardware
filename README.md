@@ -1,0 +1,1 @@
+# Evolutionary-Synthesis-of-Unified-Activation-Functions-for-Edge-Deep-Learning-Hardware
