@@ -1,10 +1,18 @@
-Evolutionary Synthesis of Unified Activation Functions
+# Evolutionary Synthesis of Unified Activation Functions for Deep-Learning Hardware
 
-This repository contains the Cartesian Genetic Programming (CGP) engine, generated RTL, functional verification scripts, CNN evaluation code, and RI5CY processor integration files for a unified hardware approximation of the Swish, GELU, and Tanhexp activation functions.
+This repository contains the CGP implementation, generated RTL design,
+functional-verification scripts, CNN evaluation code, and RI5CY
+processor-integration files associated with the proposed unified
+activation-function hardware.
 
-All implementation files are located in the codes/ directory.
+Cartesian Genetic Programming (CGP) is used to generate a shared
+logic-based implementation of Swish, GELU, and Tanhexp. The generated
+design is evaluated through RTL simulation, quantization-aware CNN
+training, and integration with the RI5CY RISC-V core.
 
-Repository Structure
+## Repository Structure
+
+```text
 .
 ├── README.md
 └── codes/
@@ -29,251 +37,211 @@ Repository Structure
     ├── run_ri5cy_activation_sweep.sh
     ├── ri5cy_unified_activation_results.csv
     └── analyze_ri5cy_activation_csv.py
+```
 
-1. CGP Circuit Generation
-Source File
+## CGP Circuit Generation
 
+The CUDA-based CGP implementation is provided in:
+
+```text
 codes/cgp_engine.cu
+```
 
-The CUDA-accelerated CGP engine evolves a unified logic circuit for the Swish, GELU, and Tanhexp activation functions. The selected CGP solution is automatically exported as synthesizable Verilog RTL.
+The program evolves a unified logic circuit for Swish, GELU, and
+Tanhexp and exports the selected solution as synthesizable Verilog RTL.
 
-Requirements
-CUDA-compatible NVIDIA GPU
-NVIDIA CUDA Toolkit with nvcc
-Compile and Run
+Run the CGP engine using:
 
-From the repository root:
-
-nvcc -O3 codes/cgp_engine.cu -o codes/cgp_engine
-./codes/cgp_engine
-
-
-Alternatively, run the commands from the codes/ directory:
-
+```bash
 cd codes
 nvcc -O3 cgp_engine.cu -o cgp_engine
 ./cgp_engine
-
-Generated Output
+```
 
 The generated RTL is written to:
 
+```text
+unified_cuda_cgp_activation.v
+```
+
+## RTL Functional Verification
+
+The generated unified activation circuit is provided in:
+
+```text
 codes/unified_cuda_cgp_activation.v
+```
 
+The associated Verilog and Python verification files are:
 
-The CGP engine periodically saves its evolutionary state. If a valid checkpoint is available, execution resumes from the saved generation.
-
-2. CGP-Generated RTL Verification
-Verilog RTL
-
-codes/unified_cuda_cgp_activation.v
-
-This synthesizable Verilog module implements the evolved activation-function circuit. It accepts a 16-bit fixed-point activation input and a function-selection input.
-
-Verilog Testbench
-
+```text
 codes/tb_universal.v
-
-The testbench simulates the generated activation circuit.
-
-Run the simulation from the codes/ directory:
-
-cd codes
-iverilog -o sim_run.vvp tb_universal.v unified_cuda_cgp_activation.v
-vvp sim_run.vvp
-
-Python Functional Verification
-
 codes/cgp_act_fns_universal_tb.py
+```
 
-This script compares the generated RTL outputs against the expected quantized activation values.
+Run the Python-based functional verification using:
 
-Run it from the repository root:
+```bash
+cd codes
+python3 cgp_act_fns_universal_tb.py
+```
 
-python3 codes/cgp_act_fns_universal_tb.py
+The generated comparison results are stored in:
 
-Verification Results
-
-The corresponding results are stored in:
-
+```text
 codes/cgp_results2.csv
 codes/sim_results.csv
-3. CNN Evaluation
+```
 
-The CNN experiments use quantization-aware training to compare polynomial-based and CGP-generated activation approximations.
+## CNN Evaluation
 
-Before running the experiments, configure the dataset paths and training parameters in the corresponding Python and shell scripts.
+The proposed and polynomial-based activation approximations are evaluated
+using ResNet-18 with quantization-aware training on CIFAR-100 and
+Tiny-ImageNet-200.
 
-3.1. CIFAR-100
+### CIFAR-100
 
-Relevant files:
+The CIFAR-100 training files are:
 
+```text
 codes/train_cifar100_resnet.py
 codes/run_cifar100_resnet.sh
+```
 
-Run the CIFAR-100 activation experiments from the repository root:
+Run all CIFAR-100 experiments using:
 
-chmod +x codes/run_cifar100_resnet.sh
-./codes/run_cifar100_resnet.sh
+```bash
+cd codes
+chmod +x run_cifar100_resnet.sh
+./run_cifar100_resnet.sh
+```
 
+The generated training logs are stored in:
 
-Training logs are stored in:
-
+```text
 codes/logs_cifar100/
+```
 
+### Tiny-ImageNet-200
 
-The combined training-loss data is stored in:
+The Tiny-ImageNet-200 training files are:
 
-codes/resnet_cifar100.csv
-
-3.2. Tiny-ImageNet-200
-
-Relevant files:
-
+```text
 codes/train_tiny_imagenet.py
 codes/run_tiny_imagenet_sweep.sh
+```
 
-Run the Tiny-ImageNet-200 activation experiments from the repository root:
+Run all Tiny-ImageNet-200 experiments using:
 
-chmod +x codes/run_tiny_imagenet_sweep.sh
-./codes/run_tiny_imagenet_sweep.sh
+```bash
+cd codes
+chmod +x run_tiny_imagenet_sweep.sh
+./run_tiny_imagenet_sweep.sh
+```
 
+The generated training logs are stored in:
 
-Training logs are stored in:
-
+```text
 codes/logs/
+```
 
+The dataset paths must be configured in the corresponding training
+scripts before running the experiments.
 
-The combined training-loss data is stored in:
+## Training-Loss Plots
 
+The combined CSV files containing the training-loss values are:
+
+```text
+codes/resnet_cifar100.csv
 codes/resnet_tinyimagenet.csv
+```
 
-4. Loss Extraction and Plotting
+Generate the CIFAR-100 loss plot using:
 
-The plotting scripts process the combined CNN training-loss data and generate loss curves for the evaluated activation functions.
+```bash
+cd codes
+python3 combined_csv_plotter_cifar100.py
+```
 
-4.1. CIFAR-100
+Generate the Tiny-ImageNet-200 loss plot using:
 
-Script: codes/combined_csv_plotter_cifar100.py
+```bash
+cd codes
+python3 combined_csv_plotter_tinyimagenet.py
+```
 
-Input CSV: codes/resnet_cifar100.csv
+## RI5CY Processor Integration
 
-Run:
+The processor-level experiment integrates the unified activation hardware
+with the RI5CY RISC-V core through a custom instruction interface.
 
-python3 codes/combined_csv_plotter_cifar100.py
+The relevant files are:
 
-4.2. Tiny-ImageNet-200
+```text
+codes/ri5cy_uni_act_fns_fixed.sv
+codes/ri5cy_unified_activation_sweep_tb.sv
+codes/run_ri5cy_activation_sweep.sh
+```
 
-Script: codes/combined_csv_plotter_tinyimagenet.py
+The RI5CY simulation flow requires:
 
-Input CSV: codes/resnet_tinyimagenet.csv
-
-Run:
-
-python3 codes/combined_csv_plotter_tinyimagenet.py
-
-5. RI5CY Integration and Verification
-
-The repository includes a modified RI5CY processor implementation with integrated unified activation-function hardware and a custom instruction interface.
-
-5.1. Software Requirements
-
-The RI5CY simulation flow requires Verilator 5.008. Other versions may not compile or execute the provided simulation flow correctly.
-
-Check the installed version:
-
-verilator --version
-
-
-Expected version:
-
+```text
 Verilator 5.008
+```
 
-5.2. Integrated RTL
+Other Verilator versions may not compile or execute the provided flow
+correctly.
 
-File: codes/ri5cy_uni_act_fns_fixed.sv
+Check the installed Verilator version using:
 
-This SystemVerilog file contains the RI5CY RTL with the integrated unified activation-function hardware and custom instruction interface.
-
-5.3. Activation Sweep Testbench
-
-File: codes/ri5cy_unified_activation_sweep_tb.sv
-
-This testbench evaluates the supported activation functions over a range of input values through the modified RI5CY core.
-
-5.4. Run the Simulation
-
-Script: codes/run_ri5cy_activation_sweep.sh
-
-Run the complete compilation and activation-function simulation flow from the repository root:
-
-chmod +x codes/run_ri5cy_activation_sweep.sh
-./codes/run_ri5cy_activation_sweep.sh
-
-
-The script invokes Verilator, builds the simulation model, runs the activation sweep, and writes the results to:
-
-codes/ri5cy_unified_activation_results.csv
-
-
-Verilator-generated build files are stored in:
-
-codes/obj_dir/
-
-5.5. Analyze the Results
-
-Script: codes/analyze_ri5cy_activation_csv.py
-
-Run the analysis script:
-
-python3 codes/analyze_ri5cy_activation_csv.py
-
-
-This script analyzes the activation-sweep results recorded in the generated CSV file.
-
-6. Software Requirements
-
-The complete workflow requires the following software and tools:
-
-CUDA-compatible NVIDIA GPU
-NVIDIA CUDA Toolkit (nvcc)
-Python 3
-PyTorch
-TorchVision
-Pandas
-Matplotlib
-Icarus Verilog
-Verilator 5.008 for the RI5CY simulation flow
-6.1. Install Python Dependencies
-python3 -m pip install torch torchvision pandas matplotlib
-
-6.2. Install Icarus Verilog
-
-On Ubuntu, install Icarus Verilog using:
-
-sudo apt update
-sudo apt install iverilog
-
-6.3. Install Verilator
-
-Install Verilator separately and ensure that version 5.008 is available for the RI5CY simulation flow.
-
-Verify the installation:
-
+```bash
 verilator --version
+```
 
-7. Typical Execution Workflow
+Run the complete RI5CY activation sweep using:
 
-The recommended workflow is:
+```bash
+cd codes
+chmod +x run_ri5cy_activation_sweep.sh
+./run_ri5cy_activation_sweep.sh
+```
 
-Generate the circuit: Compile and run the CUDA-based CGP engine.
-Verify the RTL: Simulate the generated Verilog and run the Python functional-verification script.
-Evaluate CNN performance: Run the CIFAR-100 and Tiny-ImageNet-200 activation experiments.
-Plot training losses: Generate the loss curves using the corresponding plotting scripts.
-Verify RI5CY integration: Run the activation sweep using Verilator 5.008.
-Analyze processor results: Process the generated RI5CY activation-sweep CSV file.
-8. Code Availability
+The script automatically builds the RI5CY simulation, executes the
+activation-function sweep, and stores the results in:
 
-The repository provides the CGP engine, generated RTL, functional-verification scripts, CNN evaluation code, plotting utilities, and RI5CY processor-integration files used in this work.
+```text
+codes/ri5cy_unified_activation_results.csv
+```
 
-All implementation files are available in the codes/ directory.
+Analyze the generated processor-level results using:
+
+```bash
+cd codes
+python3 analyze_ri5cy_activation_csv.py
+```
+
+## Reproduction Flow
+
+The complete evaluation can be reproduced in the following order:
+
+1. Run the CUDA-based CGP engine.
+2. Verify the generated Verilog RTL.
+3. Run the CIFAR-100 and Tiny-ImageNet-200 CNN experiments.
+4. Generate the training-loss plots.
+5. Run the RI5CY activation sweep using Verilator 5.008.
+6. Analyze the RI5CY simulation results.
+
+## Requirements
+
+The experiments require:
+
+- CUDA-compatible NVIDIA GPU
+- NVIDIA CUDA compiler
+- Python 3
+- PyTorch
+- TorchVision
+- Pandas
+- Matplotlib
+- Icarus Verilog
+- Verilator 5.008
