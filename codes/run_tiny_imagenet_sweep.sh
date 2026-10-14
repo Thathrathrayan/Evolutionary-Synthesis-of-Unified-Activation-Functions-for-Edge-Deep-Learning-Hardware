@@ -1,6 +1,5 @@
 #!/bin/bash
 
-#models=("resnet18" "mobilenetv2")
 models=("resnet18")
 activations=( 
     "PolyTanhexp" 
